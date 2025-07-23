@@ -1,6 +1,3 @@
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-
 #define VK_USE_PLATFORM_WIN32_KHR
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -21,26 +18,19 @@
 #include <objload/tiny_obj_loader.h>
 
 #include <iostream>
+#include <fstream>
 #include <stdexcept>
-#include <stdexcept>
-#include <cstdlib>
+#include <algorithm>
+#include <chrono>
 #include <vector>
-#include <map>
-#include <set>
-#include <optional>
+#include <cstdlib>
 #include <cstdint>
 #include <limits>
-#include <algorithm>
-#include <fstream>
 #include <array>
-#include <chrono>
+#include <optional>
+#include <set>
 #include <unordered_map>
 
-
-// max frames to be processed concurrently
-// (2 is chosen as to not let the CPU get too
-// far ahead of GPU)
-const int MAX_FRAMES_IN_FLIGHT = 2;
 
 // specify window size
 const uint32_t WIDTH = 800;
@@ -48,6 +38,11 @@ const uint32_t HEIGHT = 600;
 
 const std::string MODEL_PATH = "models/viking_room.obj";
 const std::string TEXTURE_PATH = "textures/viking_room.png";
+
+// max frames to be processed concurrently
+// (2 is chosen as to not let the CPU get too
+// far ahead of GPU)
+const int MAX_FRAMES_IN_FLIGHT = 2;
 
 // validations layers
 const std::vector<const char*> validationLayers = {
@@ -65,21 +60,6 @@ const bool enableValidationLayers = false;
 #else
 const bool enableValidationLayers = true;
 #endif // NDEBUG
-
-struct QueueFamilyIndices {
-	std::optional<uint32_t> graphicsFamily;
-	std::optional<uint32_t> presentFamily;
-
-	bool isComplete() {
-		return graphicsFamily.has_value() && presentFamily.has_value();
-	}
-};
-
-struct SwapChainSupportDetails {
-	VkSurfaceCapabilitiesKHR capabilities;
-	std::vector<VkSurfaceFormatKHR> formats;
-	std::vector<VkPresentModeKHR> presentModes;
-};
 
 VkResult CreateDebugUtilsMessengerEXT(
 	VkInstance instance,
@@ -108,6 +88,21 @@ void DestroyDebugUtilsMessengerEXT(
 		func(instance, debugMessenger, pAllocator);
 	}
 }
+
+struct QueueFamilyIndices {
+	std::optional<uint32_t> graphicsFamily;
+	std::optional<uint32_t> presentFamily;
+
+	bool isComplete() {
+		return graphicsFamily.has_value() && presentFamily.has_value();
+	}
+};
+
+struct SwapChainSupportDetails {
+	VkSurfaceCapabilitiesKHR capabilities;
+	std::vector<VkSurfaceFormatKHR> formats;
+	std::vector<VkPresentModeKHR> presentModes;
+};
 
 struct Vertex {
 	glm::vec3 pos;
@@ -1761,8 +1756,6 @@ private:
 	void drawFrame() {
 		vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
-		updateUniformBuffer(currentFrame);
-
 		uint32_t imageIndex;
 		VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
@@ -1773,6 +1766,8 @@ private:
 		else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
 			throw std::runtime_error("failed to acquire swap chain image!");
 		}
+
+		updateUniformBuffer(currentFrame);
 
 		vkResetFences(device, 1, &inFlightFences[currentFrame]);
 		
@@ -1788,10 +1783,10 @@ private:
 		submitInfo.pWaitSemaphores = waitSemaphores;
 		submitInfo.pWaitDstStageMask = waitStages;
 
-		submitInfo.commandBufferCount = 1;
+		submitInfo.commandBufferCount = 1; 
 		submitInfo.pCommandBuffers = &commandBuffers[currentFrame];
 
-		VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[currentFrame]};
+		VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[currentFrame] };
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pSignalSemaphores = signalSemaphores;
 
