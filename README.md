@@ -41,10 +41,16 @@ cmake --build . --config Release
 <img src="https://cdn-icons-png.freepik.com/512/8964/8964273.png" height="30",align = "center">
 Run
 </h2>
+For Command Prompt:
 
 ```
 cd Release
-/MyVulkanApp.exe
+MyVulkanApp.exe
+```
+For Git Bash:
+```
+cd Release
+./MyVulkanApp.exe
 ```
 
 
